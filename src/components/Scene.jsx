@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef } from "react";
 import { Canvas, extend, useThree, useFrame, useLoader } from "@react-three/fiber";
 import {
   CubeTextureLoader,
@@ -15,9 +15,9 @@ import { OrbitControls, GizmoHelper, GizmoViewport } from '@react-three/drei';
 import { TextureLoader } from 'three';
 import wavuSheet from '../assets/player-spritesheets/char-wavedash.png';
 import Player from '../components/Player.jsx';
-import Scene from "./Scene.jsx";
 import walkingSheet from '../assets/player-spritesheets/char-walking.png';
 import crouchingSheet from '../assets/player-spritesheets/char-crouching.png';
+import '../components/GameWindow.jsx';
 import crouchDashSheet from '../assets/player-spritesheets/char-crouchdash2.png';
 
 function SkyBox() {
@@ -68,60 +68,48 @@ function GreenSquare() {
     );
 }
 
+const startScene0 = 
+<Canvas camera={{ fov: 90,  position: [0, 5, 10] }}>
+    <OrbitControls/>
+    <gridHelper/>
+    <Player/>
+    <GizmoHelper
+        alignment="bottom-right" // widget alignment within scene
+        margin={[80, 80]} // widget margins (X, Y)
+        >
+        <GizmoViewport axisColors={['red', 'green', 'blue']} labelColor="black" />
+        {/* alternative: <GizmoViewcube /> */}
+    </GizmoHelper>
+    <mesh>
+        <boxGeometry />
+        <meshBasicMaterial/>
+    </mesh>
+    <GreenSquare/>
+    <SkyBox/>
+</Canvas>;
 
+const gameScene1 = 
 
+<Canvas camera={{ fov: 90,  position: [0, 5, 10] }}>
+    <OrbitControls/>
+    <gridHelper/>
+    <Player/>
+    <GizmoHelper
+        alignment="bottom-right" // widget alignment within scene
+        margin={[80, 80]} // widget margins (X, Y)
+        >
+        <GizmoViewport axisColors={['red', 'green', 'blue']} labelColor="black" />
+        {/* alternative: <GizmoViewcube /> */}
+    </GizmoHelper>
+    <SkyBox/>
+</Canvas>;
 
+const sceneArr = [startScene0, gameScene1]
 
-const sKeyPressed = (event) =>{
-  
-  if(event.code == 'KeyS'){
-      console.log("S key pressed");
-      handleReaction();
-  }
-}
-
-
-function GameWindow(){
-    const [sceneId, setSceneId] = useState(1);
-
-    useEffect(() => {
-      window.addEventListener('keydown', sKeyPressed);
-      //window.addEventListener('keydown', escKeyPressed);
-    
-      return() => {
-          window.removeEventListener('keydown', sKeyPressed);
-          //window.removeEventListener('keydown', escKeyPressed);
-      };
-    });
-   
+function Scene({sceneId}){
     return(
-        <>
-            
-            <div className="flex py-0 pl-paddingLength pr-paddingLength h-95">
-                <Scene sceneId={sceneId}>
-
-                </Scene>
-            </div>
-        </>
+        sceneArr[sceneId]
     );
 }
 
-export default GameWindow
-
-/*
-<div className="flex py-0 pl-paddingLength pr-paddingLength h-95">
-                <Canvas camera={{ fov: 90,  position: [0, 5, 10] }}>
-                    <OrbitControls/>
-                    <gridHelper/>
-                    <Player/>
-                    <GizmoHelper
-                        alignment="bottom-right" // widget alignment within scene
-                        margin={[80, 80]} // widget margins (X, Y)
-                        >
-                        <GizmoViewport axisColors={['red', 'green', 'blue']} labelColor="black" />
-                        
-                        </GizmoHelper>
-                        <SkyBox/>
-                    </Canvas>
-                </div>
-*/
+export default Scene
