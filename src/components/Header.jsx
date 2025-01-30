@@ -1,7 +1,7 @@
 function Header(){
     return(
         <>
-            <div className="flex bg-headerColor">
+            <div className="flex bg-headerColor h-topHeight">
                 <div className="flex flex-1 flex-row justify-between py-0 pl-paddingLength pr-paddingLength ">
                     <a className ='logoContainer flex items-center gap-2 justify-center'
                         href='https://twitter.com/WeenDaniel'

@@ -12,6 +12,7 @@ import {
   NearestFilter,
 } from "three";
 import { OrbitControls, GizmoHelper, GizmoViewport } from '@react-three/drei';
+import { Root, Container } from "@react-three/uikit";
 import { TextureLoader } from 'three';
 import wavuSheet from '../assets/player-spritesheets/char-wavedash.png';
 import Player from '../components/Player.jsx';
@@ -69,9 +70,13 @@ function GreenSquare() {
 }
 
 const startScene0 = 
-<Canvas camera={{ fov: 90,  position: [0, 5, 10] }}>
+<Canvas style={{  inset: "0", touchAction: "none" }} gl={{ localClippingEnabled: true }} >
     <OrbitControls/>
     <gridHelper/>
+    <Root backgroundColor="red" sizeX={8} sizeY={4} flexDirection="row">
+        <Container flexGrow={1} margin={32} backgroundColor="green" />
+        <Container flexGrow={1} margin={32} backgroundColor="blue" />
+    </Root>
     <Player/>
     <GizmoHelper
         alignment="bottom-right" // widget alignment within scene

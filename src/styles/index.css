@@ -25,4 +25,5 @@
   --text-biggestSize: clamp(1.618rem, 1.3634rem + 1.0443vw, 2.616625rem);
 
   --padding-paddingLength: calc(15.6rem - clamp(1.2rem, 29.4857rem + -23.5714vw, 14.4rem));
+  --height-topHeight: 10vh;
 }

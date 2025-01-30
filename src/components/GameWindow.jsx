@@ -72,17 +72,10 @@ function GreenSquare() {
 
 
 
-const sKeyPressed = (event) =>{
-  
-  if(event.code == 'KeyS'){
-      console.log("S key pressed");
-      handleReaction();
-  }
-}
 
 
 function GameWindow(){
-    const [sceneId, setSceneId] = useState(1);
+    const [sceneId, setSceneId] = useState(0);
 
     useEffect(() => {
       window.addEventListener('keydown', sKeyPressed);
@@ -94,10 +87,19 @@ function GameWindow(){
       };
     });
    
+    const sKeyPressed = (event) =>{
+      if(event.code == 'KeyS'){
+          console.log("S key pressed");
+          setSceneId(1);
+      }
+    }
+    
+
+
     return(
         <>
             
-            <div className="flex py-0 pl-paddingLength pr-paddingLength h-95">
+            <div className="flex py-0 pl-paddingLength pr-paddingLength h-[80vh]">
                 <Scene sceneId={sceneId}>
 
                 </Scene>
