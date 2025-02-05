@@ -1,112 +1,107 @@
-import React, { useEffect, useRef, useState } from "react";
-import { Canvas, extend, useThree, useFrame, useLoader } from "@react-three/fiber";
-import {
-  CubeTextureLoader,
-  CubeCamera,
-  WebGLCubeRenderTarget,
-  RGBFormat,
-  LinearMipmapLinearFilter,
-  MeshBasicMaterial,
-  PlaneGeometry,
-  DoubleSide,
-  NearestFilter,
-} from "three";
-import { OrbitControls, GizmoHelper, GizmoViewport } from '@react-three/drei'
+import React, { useState, useRef, useEffect, useContext } from 'react';
+import { useLoader, useFrame } from '@react-three/fiber';
 import { Root, Container, Fullscreen, Text} from "@react-three/uikit";
-import { TextureLoader } from 'three'
-import wavuSheet from '../assets/player-spritesheets/char-wavedash.png'
-import idleSheet from '../assets/player-spritesheets/char-idle.png'
-import { useGamepads } from 'react-gamepads';
+import { GamepadsContext, useGamepads } from 'react-gamepads';
+import { TextureLoader, NearestFilter } from 'three';
+import { OrbitControls, GizmoHelper, GizmoViewport } from '@react-three/drei'
+
+import idleSheet from '../assets/player-spritesheets/char-idle.png';
+import wavuSheet from '../assets/player-spritesheets/char-wavedash.png';
+
 const animations = {
-  "wavedash": [wavuSheet, 6],
-  "idle": [idleSheet, 8]
+  'idle': [idleSheet, 8], 
+  'wavu': [wavuSheet, 6], 
 };
 
-function Player({}){
-  const [animationState, setAnimationState] = useState('idle');
-  const [gamepads, setGamepads] = useState({});
-  useGamepads(gamepads => setGamepads(gamepads));
+function AnimatedSprite({ animation }) {
+  const [currentAnimation, setCurrentAnimation] = useState(animation);
+  const texture = useLoader(TextureLoader, animations[animation][0]);
+  texture.minFilter = NearestFilter;
+  texture.magFilter = NearestFilter;
+  texture.repeat.set(1 / animations[animation][1], 1);
 
-  // useEffect(()=>{
-  //   console.log(gamepads[0].buttons[4]);
-  // }, [gamepads])
-  
-  const handleGamepadConnected = (e) => {
-    addGamePads(e.gamepad);
-    console.log('Gamepad connected:', e.gamepad);
-  };
-
-  const addGamePads = gamepad =>{
-    setGamepads({
-      ...gamepads,
-      [gamepad.index]: {
-        buttons: gamepad.buttons,
-        id: gamepad.id,
-        axes: gamepad.axes
-      }
-    });
-  }
-
-  const handleGamepadDisconnected = (e) => {
-    setGamepads({});
-    console.log('Gamepad disconnected:', e.gamepad);
-  };
+  const frame = useRef(0);
+  const t = useRef(0);
 
   useEffect(()=>{
-    window.addEventListener('gamepadconnected', handleGamepadConnected);
-    window.addEventListener('gamepaddisconnected', handleGamepadDisconnected);
-    
-    return()=>{
-      window.removeEventListener('gamepadconnected', handleGamepadConnected);
-      window.removeEventListener('gamepaddisconnected', handleGamepadDisconnected);
+    console.log('animation changed')
+    if(animation != currentAnimation){
+      console.log('reset frame and time')
+      frame.current = 0;
+      t.current = 0;
+      texture.offset.x = 0;
     }
-  }, []);
+    setCurrentAnimation(animation);
+  }, [animation]);
+  
+  useFrame((_, delta) => {
+    t.current += delta * 1000;
+    if (t.current >= 100) {
+      frame.current = (frame.current + 1) % animations[animation][1];
+      t.current = 0;
+      texture.offset.x = frame.current / animations[animation][1];
+    }
+  });
 
-  function AnimatedSprite({totalFrames, animation}){
-    const texture = useLoader(TextureLoader, animations[animation][0]);
-    texture.minFilter = NearestFilter
-    texture.magFilter = NearestFilter
-    texture.repeat.set(1 / animations[animation][1], 1);
-    animateSpriteSheet(texture, 100, animations[animation][1]);
-    // inside of the sprite tag you can put the position 
-    return(
-      <sprite> 
-        <spriteMaterial map ={texture}/>
-      </sprite>
-    )
-  }
-
-  function animateSpriteSheet(texture, frames, totalFrames){
-    const t = useRef(0)
-    const currentFrame = useRef(0)
-    useFrame((_, delta) => {
-      t.current += delta * 1000
-      if (t.current >= frames) {
-        currentFrame.current += 1
-
-        if (currentFrame.current >= totalFrames) {
-          currentFrame.current = 0
-        }
-        t.current = 0
-        texture.offset.x = currentFrame.current / totalFrames
-      }
-    })
-
-    return { t, currentFrame }
-  }
-
-  return(
+  return (
     <>
-      <AnimatedSprite totalFrames={6} animation={'idle'}  position={[10,5,0]}/>
+      <sprite>
+        <spriteMaterial map={texture} />
+      </sprite>
       <Fullscreen flexDirection="column" >
-              <Container flexGrow={1}  justifyContent={'center'}>
-                    <Text>
-                      {gamepads[0] ? (gamepads[0].buttons[4].pressed ? "Pressed" : "Not Pressed") : "not connected"}
-                    </Text>
-              </Container>
+          <Container flexGrow={1}  justifyContent={'center'}>
+                 <Text>
+                   {`frame: ${frame.current} time: ${t.current}`}
+                </Text>
+           </Container>
+           <Container flexGrow={1}  justifyContent={'center'}>
+                 <Text>
+                   {`frame: ${frame.current} time: ${t.current}`}
+                </Text>
+           </Container>
       </Fullscreen>
     </>
+    
   );
 }
 
-export default Player
+function Player() {
+  const [animationState, setAnimationState] = useState('idle');
+  // const [gamepads, setGamepads] = useState({});
+  const { gamepads } = useContext(GamepadsContext);
+  // useGamepads((_gamepads) => {
+  //   setGamepads(_gamepads);
+  //   console.log("hello");
+  // });
+
+  useEffect(() => {
+    const checkGamepadInput = () => {
+      if (gamepads[0] && gamepads[0].buttons[4].pressed) {
+        console.log('button pressed');
+        setAnimationState('wavu');
+      } else {
+        setAnimationState('idle');
+      }
+    };
+    if(gamepads[0]){
+      checkGamepadInput();
+    }
+    const interval = setInterval(checkGamepadInput, 100); 
+    return () => clearInterval(interval); 
+  },[gamepads]);
+
+  return (
+    <group>
+      <AnimatedSprite animation={animationState}/>
+      <Fullscreen flexDirection="column" >
+          <Container flexGrow={1}  justifyContent={'center'}>
+                 <Text>
+                   {gamepads[0] ? (gamepads[0].buttons[4].pressed ? "Pressed" : "Not Pressed") : "not connected"}
+                </Text>
+           </Container>
+      </Fullscreen>
+    </group>
+  );
+}
+
+export default Player;

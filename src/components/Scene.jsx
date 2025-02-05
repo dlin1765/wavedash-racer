@@ -21,6 +21,7 @@ import walkingSheet from '../assets/player-spritesheets/char-walking.png';
 import crouchingSheet from '../assets/player-spritesheets/char-crouching.png';
 import '../components/GameWindow.jsx';
 import crouchDashSheet from '../assets/player-spritesheets/char-crouchdash2.png';
+import { GamepadsProvider } from 'react-gamepads';
 
 function SkyBox() {
     const { scene } = useThree();
@@ -135,7 +136,9 @@ function Scene({sceneId, playButtonClicked, menuButtonClicked}){
 
 
     return(
-        sceneArr[sceneId]
+      <GamepadsProvider>
+        {sceneArr[sceneId]}
+      </GamepadsProvider>
     );
 }
 
