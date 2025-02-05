@@ -12,7 +12,8 @@ import {
   NearestFilter,
 } from "three";
 import { OrbitControls, GizmoHelper, GizmoViewport } from '@react-three/drei';
-import { Root, Container } from "@react-three/uikit";
+import { Root, Container, Fullscreen, Text} from "@react-three/uikit";
+import { Button } from "@react-three/uikit-default"
 import { TextureLoader } from 'three';
 import wavuSheet from '../assets/player-spritesheets/char-wavedash.png';
 import Player from '../components/Player.jsx';
@@ -69,49 +70,70 @@ function GreenSquare() {
     );
 }
 
-const startScene0 = 
-<Canvas style={{  inset: "0", touchAction: "none" }} gl={{ localClippingEnabled: true }} >
-    <OrbitControls/>
-    <gridHelper/>
-    <Root backgroundColor="red" sizeX={8} sizeY={4} flexDirection="row">
-        <Container flexGrow={1} margin={32} backgroundColor="green" />
-        <Container flexGrow={1} margin={32} backgroundColor="blue" />
-    </Root>
-    <Player/>
-    <GizmoHelper
-        alignment="bottom-right" // widget alignment within scene
-        margin={[80, 80]} // widget margins (X, Y)
-        >
-        <GizmoViewport axisColors={['red', 'green', 'blue']} labelColor="black" />
-        {/* alternative: <GizmoViewcube /> */}
-    </GizmoHelper>
-    <mesh>
-        <boxGeometry />
-        <meshBasicMaterial/>
-    </mesh>
-    <GreenSquare/>
-    <SkyBox/>
-</Canvas>;
 
-const gameScene1 = 
 
-<Canvas camera={{ fov: 90,  position: [0, 5, 10] }}>
-    <OrbitControls/>
-    <gridHelper/>
-    <Player/>
-    <GizmoHelper
-        alignment="bottom-right" // widget alignment within scene
-        margin={[80, 80]} // widget margins (X, Y)
-        >
-        <GizmoViewport axisColors={['red', 'green', 'blue']} labelColor="black" />
-        {/* alternative: <GizmoViewcube /> */}
-    </GizmoHelper>
-    <SkyBox/>
-</Canvas>;
 
-const sceneArr = [startScene0, gameScene1]
 
-function Scene({sceneId}){
+
+function Scene({sceneId, playButtonClicked, menuButtonClicked}){
+
+  function createLobby(){
+
+  }
+
+  function joinLobby(){
+
+  }
+  const startScene0 = 
+  <Canvas style={{  inset: "0", touchAction: "none" }} gl={{ localClippingEnabled: true }} >
+      <Fullscreen backgroundColor="red" sizeX={8} sizeY={4} flexDirection="column">
+          <Container flexGrow={1} margin={32} backgroundColor="green">
+            <Button variant="outline" size="default" backgroundColor='white' onClick={playButtonClicked}>
+              <Text>
+                Play
+              </Text>
+            </Button>
+            <Button variant="outline" size="default" backgroundColor='white'>
+              <Text>
+                Create a private lobby
+              </Text>
+            </Button>
+            <Button variant="outline" size="default" backgroundColor='white'>
+              <Text>
+                Join lobby via code
+              </Text>
+            </Button>
+          </Container>
+          <Container flexGrow={1} margin={32} backgroundColor="blue" />
+      </Fullscreen>
+  </Canvas>;
+
+  const gameScene1 = 
+  <Canvas camera={{ fov: 90,  position: [0, 5, 10] }}>
+      <Fullscreen flexDirection="column" >
+        <Container flexGrow={1}>
+            <Button variant="outline" size="default" backgroundColor='white' onClick={menuButtonClicked}>
+              <Text>
+                menu
+              </Text>
+            </Button>
+        </Container>
+      </Fullscreen>
+      <OrbitControls/>
+      <gridHelper/>
+      <Player />
+      <GizmoHelper
+          alignment="bottom-right" // widget alignment within scene
+          margin={[80, 80]} // widget margins (X, Y)
+          >
+          <GizmoViewport axisColors={['red', 'green', 'blue']} labelColor="black" />
+          {/* alternative: <GizmoViewcube /> */}
+      </GizmoHelper>
+      <SkyBox/>
+  </Canvas>;
+  const sceneArr = [startScene0, gameScene1];
+
+
     return(
         sceneArr[sceneId]
     );

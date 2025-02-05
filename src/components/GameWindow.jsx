@@ -90,17 +90,25 @@ function GameWindow(){
     const sKeyPressed = (event) =>{
       if(event.code == 'KeyS'){
           console.log("S key pressed");
-          setSceneId(1);
+          //setSceneId(1);
       }
     }
+    function playButtonClicked(){
+      console.log('play button clicked');
+      setSceneId(1);
+    }
     
+    function menuButtonClicked(){
+      console.log('menu button clicked');
+      setSceneId(0);
+    }
 
 
     return(
         <>
             
             <div className="flex py-0 pl-paddingLength pr-paddingLength h-[80vh]">
-                <Scene sceneId={sceneId}>
+                <Scene sceneId={sceneId} playButtonClicked={playButtonClicked} menuButtonClicked={menuButtonClicked}>
 
                 </Scene>
             </div>
