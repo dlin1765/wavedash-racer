@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef } from "react";
 import { Canvas, extend, useThree, useFrame, useLoader } from "@react-three/fiber";
 import {
   CubeTextureLoader,
@@ -12,13 +12,16 @@ import {
   NearestFilter,
 } from "three";
 import { OrbitControls, GizmoHelper, GizmoViewport } from '@react-three/drei';
+import { Root, Container, Fullscreen, Text} from "@react-three/uikit";
+import { Button } from "@react-three/uikit-default"
 import { TextureLoader } from 'three';
 import wavuSheet from '../assets/player-spritesheets/char-wavedash.png';
-import Player from '../components/Player.jsx';
-import Scene from "./Scene.jsx";
+import Player from './Player.jsx';
 import walkingSheet from '../assets/player-spritesheets/char-walking.png';
 import crouchingSheet from '../assets/player-spritesheets/char-crouching.png';
+import './GameWindow.jsx';
 import crouchDashSheet from '../assets/player-spritesheets/char-crouchdash2.png';
+import { GamepadsProvider } from 'react-gamepads';
 
 function SkyBox() {
     const { scene } = useThree();
@@ -72,66 +75,71 @@ function GreenSquare() {
 
 
 
+// take the props and manipulate the scene based on what the inputs are
+function Scene({sceneId, playButtonClicked, menuButtonClicked}){
 
+  function createLobby(){
 
-function GameWindow(){
-    const [sceneId, setSceneId] = useState(0);
+  }
 
-    useEffect(() => {
-      window.addEventListener('keydown', sKeyPressed);
-      //window.addEventListener('keydown', escKeyPressed);
-    
-      return() => {
-          window.removeEventListener('keydown', sKeyPressed);
-          //window.removeEventListener('keydown', escKeyPressed);
-      };
-    });
-   
-    const sKeyPressed = (event) =>{
-      if(event.code == 'KeyS'){
-          console.log("S key pressed");
-          //setSceneId(1);
-      }
-    }
-    function playButtonClicked(){
-      console.log('play button clicked');
-      setSceneId(1);
-    }
-    
-    function menuButtonClicked(){
-      console.log('menu button clicked');
-      setSceneId(0);
-    }
+  function joinLobby(){
+
+  }
+  const startScene0 = 
+  <Canvas style={{  inset: "0", touchAction: "none" }} gl={{ localClippingEnabled: true }} >
+      <Fullscreen backgroundColor="red" sizeX={8} sizeY={4} flexDirection="column">
+          <Container flexGrow={1} margin={32} backgroundColor="green">
+            <Button variant="outline" size="default" backgroundColor='white' onClick={playButtonClicked}>
+              <Text>
+                Play
+              </Text>
+            </Button>
+            <Button variant="outline" size="default" backgroundColor='white'>
+              <Text>
+                Create a private lobby
+              </Text>
+            </Button>
+            <Button variant="outline" size="default" backgroundColor='white'>
+              <Text>
+                Join lobby via code
+              </Text>
+            </Button>
+          </Container>
+          <Container flexGrow={1} margin={32} backgroundColor="blue" />
+      </Fullscreen>
+  </Canvas>;
+
+  const gameScene1 = 
+  <Canvas camera={{ fov: 90,  position: [0, 5, 10] }}>
+      <Fullscreen flexDirection="column" >
+        <Container flexGrow={1}>
+            <Button variant="outline" size="default" backgroundColor='white' onClick={menuButtonClicked}>
+              <Text>
+                menu
+              </Text>
+            </Button>
+        </Container>
+      </Fullscreen>
+      <OrbitControls/>
+      <gridHelper/>
+      <Player />
+      <GizmoHelper
+          alignment="bottom-right" // widget alignment within scene
+          margin={[80, 80]} // widget margins (X, Y)
+          >
+          <GizmoViewport axisColors={['red', 'green', 'blue']} labelColor="black" />
+          {/* alternative: <GizmoViewcube /> */}
+      </GizmoHelper>
+      <SkyBox/>
+  </Canvas>;
+  const sceneArr = [startScene0, gameScene1];
 
 
     return(
-        <>
-            
-            <div className="flex py-0 pl-paddingLength pr-paddingLength h-[80vh]">
-                <Scene sceneId={sceneId} playButtonClicked={playButtonClicked} menuButtonClicked={menuButtonClicked}>
-
-                </Scene>
-            </div>
-        </>
+      <GamepadsProvider>
+        {sceneArr[sceneId]}
+      </GamepadsProvider>
     );
 }
 
-export default GameWindow
-
-/*
-<div className="flex py-0 pl-paddingLength pr-paddingLength h-95">
-                <Canvas camera={{ fov: 90,  position: [0, 5, 10] }}>
-                    <OrbitControls/>
-                    <gridHelper/>
-                    <Player/>
-                    <GizmoHelper
-                        alignment="bottom-right" // widget alignment within scene
-                        margin={[80, 80]} // widget margins (X, Y)
-                        >
-                        <GizmoViewport axisColors={['red', 'green', 'blue']} labelColor="black" />
-                        
-                        </GizmoHelper>
-                        <SkyBox/>
-                    </Canvas>
-                </div>
-*/
+export default Scene
