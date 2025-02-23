@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect, useState, useContext } from "react";
 import { Canvas, extend, useThree, useFrame, useLoader } from "@react-three/fiber";
 import {
   CubeTextureLoader,
@@ -19,100 +19,74 @@ import Scene from "./Scene.jsx";
 import walkingSheet from '../assets/player-spritesheets/char-walking.png';
 import crouchingSheet from '../assets/player-spritesheets/char-crouching.png';
 import crouchDashSheet from '../assets/player-spritesheets/char-crouchdash2.png';
-
-function SkyBox() {
-    const { scene } = useThree();
-    const loader = new CubeTextureLoader();
-    // The CubeTextureLoader load method takes an array of urls representing all 6 sides of the cube.
-    const texture = loader.load([
-      "/src/assets/skycube_1/skyrender0001.png",
-      "/src/assets/skycube_1/skyrender0004.png",
-      "/src/assets/skycube_1/skyrender0003.png",
-      "/src/assets/skycube_1/skyrender0006.png",
-      "/src/assets/skycube_1/skyrender0005.png",
-      "/src/assets/skycube_1/skyrender0002.png",
-    ]);
-    // Set the scene background property to the resulting texture.
-    scene.background = texture;
-    return null;
-}
-function Controls(){
-    const{ 
-        camera,
-        gl: {domElement},
-    }= useThree();
-    return <OrbitControls args={[camera, domElement]}/>
-}
-
-function GreenSquare() {
-    const waterText = useLoader(TextureLoader, 'src/assets/skycube_1/water-texture.jpg')    
-    return (
-      // The mesh is at the origin
-      // Since it is inside a group, it is at the origin
-      // of that group
-      // It's rotated by 90 degrees along the X-axis
-      // This is because, by default, planes are rendered
-      // in the X-Y plane, where Y is the up direction
-      <mesh position={[0, 0, 0]} rotation={[Math.PI / 2, 0, 0]} scale={[1000, 1000, 1]}>
-        {/*
-          The thing that gives the mesh its shape
-          In this case the shape is a flat plane
-        */}
-        <planeGeometry />
-        {/*
-          The material gives a mesh its texture or look.
-          In this case, it is just a uniform green
-        */}
-        <meshBasicMaterial side={DoubleSide} metalness={0.5} roughness={0.2} map={waterText}/>
-      </mesh>
-    );
-}
-
-
+import { GamepadsContext, useGamepads } from 'react-gamepads';
+import { GamepadsProvider } from 'react-gamepads';
+import { Button } from "@react-three/uikit-default";
 
 // create an object that represents a gamepad 
 // implement input handling in here and pass those inputs to the components
 // then, inside the components, send those inputs to the server
-// 
 
 
+
+const controllerMapping = {
+  "up":{button: "axis[1]"}, // -1 
+  "down":{button: "axis[1]"}, // 1
+  "right":{button: "axis[0]"}, // 1
+  "left":{button: "axis[0]"}, // -1
+  "A": {button: "buttons[4]"},
+  "B": {button: "buttons[1]"}
+}
+
+const keyboardMapping = {
+  "up": {button: 'KeyW'},
+  "down": {button: "KeyS"},
+  "right": {button:"KeyD"},
+  "left": {button: "KeyA"},
+  "A": {button: "Enter"},
+  "B": {button: "Escape"}
+}
 
 function GameWindow(){
-    const [sceneId, setSceneId] = useState(0);
+    const [sceneId, setSceneId] = useState('title');
+    const [selectedController, setSelectedControler] = useState(-1);
+    const { gamepads } = useContext(GamepadsContext);
 
-    useEffect(() => {
-      window.addEventListener('keydown', sKeyPressed);
-      //window.addEventListener('keydown', escKeyPressed);
-    
-      return() => {
-          window.removeEventListener('keydown', sKeyPressed);
-          //window.removeEventListener('keydown', escKeyPressed);
-      };
-    });
+    // useEffect(() => {
+    //   window.addEventListener('keydown', KeyPressed);
+    //   //window.addEventListener('keydown', escKeyPressed);
+    //   return() => {
+    //       window.removeEventListener('keydown', KeyPressed);
+    //       //window.removeEventListener('keydown', escKeyPressed);
+    //   };
+    // });
    
-    const sKeyPressed = (event) =>{
-      if(event.code == 'KeyS'){
-          console.log("S key pressed");
-          //setSceneId(1);
-      }
-    }
-    function playButtonClicked(){
-      console.log('play button clicked');
-      setSceneId(1);
-    }
-    
-    function menuButtonClicked(){
-      console.log('menu button clicked');
-      setSceneId(0);
-    }
+    // const KeyPressed = (event) =>{
+    //   console.log(event.code);
+    //   switch(event.code){
+    //     case(keyboardMapping['up'].button):
+    //       console.log("up");
+    //       break;
+    //     case(keyboardMapping['down'].button):
+    //       console.log("up");
+    //       break;
+    //     case(keyboardMapping['left'].button):
+    //       console.log("left");
+    //       break;
+    //     case(keyboardMapping['right'].button):
+    //       console.log("right");
+    //       break;
+    //   }
+    // }
+
+   
 
 
     return(
         <>
             
             <div className="flex py-0 pl-paddingLength pr-paddingLength h-[80vh]">
-                <Scene sceneId={sceneId} playButtonClicked={playButtonClicked} menuButtonClicked={menuButtonClicked}>
-
+                <Scene>
                 </Scene>
             </div>
         </>
