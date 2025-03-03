@@ -23,6 +23,7 @@ import './GameWindow.jsx';
 import crouchDashSheet from '../assets/player-spritesheets/char-crouchdash2.png';
 import { GamepadsProvider } from 'react-gamepads';
 import { GamepadsContext, useGamepads } from 'react-gamepads';
+import InputVisualization from "./InputVisualization.jsx";
 
 const SkyBox = memo(function SkyBox(){
     const { scene } = useThree();
@@ -97,10 +98,10 @@ function GreenSquare() {
 }
 
 const controllerMapping = {
-  "up":{button: 1}, // -1 
-  "down":{button: 1}, // 1
-  "right":{button: "axis[0]"}, // 1
-  "left":{button: "axis[0]"}, // -1
+  "up":{button: (gamepad) => gamepad.axes[1]}, // -1 
+  "down":{button: (gamepad) => gamepad.axes[1]}, // 1
+  "forward":{button: (gamepad) => gamepad.axes[0]}, // 1
+  "back":{button: (gamepad) => gamepad.axes[0]}, // -1
   "A": {button: "buttons[4]"},
   "B": {button: "buttons[1]"}
 }
@@ -108,15 +109,16 @@ const controllerMapping = {
 const keyboardMapping = {
   "up": {button: 'KeyW'},
   "down": {button: "KeyS"},
-  "right": {button:"KeyD"},
-  "left": {button: "KeyA"},
+  "forward": {button:"KeyD"},
+  "back": {button: "KeyA"},
   "A": {button: "Enter"},
   "B": {button: "Escape"}
 }
 
 function Scene({}){
-  const [sceneId, setSceneId] = useState('title');
+  const [sceneId, setSceneId] = useState('title')
   const [inputBuffer, setInputBUffer] = useState([])
+  const [currentInput, setCurrentInput] = useState(['n'])
   const [selectedController, setSelectedController] = useState(-1);
   const { gamepads } = useContext(GamepadsContext);
 
@@ -138,32 +140,56 @@ function Scene({}){
       case(keyboardMapping['down'].button):
         console.log("up");
         break;
-      case(keyboardMapping['left'].button):
-        console.log("left");
+      case(keyboardMapping['back'].button):
+        console.log("back");
         break;
-      case(keyboardMapping['right'].button):
-        console.log("right");
+      case(keyboardMapping['forward'].button):
+        console.log("forward");
         break;
     }
   }
 
   function UpPressed(){
-
+    console.log('up pressed')
+    setCurrentInput('u')
   }
 
   function DownPressed(){
     console.log('DOWNPRESSED')
+    setCurrentInput('d')
   }
 
-  function LeftPressed(){
-
+  function BackPressed(){ 
+    console.log('back pressed')
+    setCurrentInput('b')
   }
 
-  function RightPressed(){
-
+  function ForwardPressed(){
+    console.log('forward pressed')
+    setCurrentInput('f')
   }
 
-  // const [temp, setTemp] = useState('hello');
+  function upBackPressed(){
+    setCurrentInput('ub')
+  }
+
+  function upForwardPressed(){
+    setCurrentInput('uf')
+  }
+
+  function downBackPressed(){
+    setCurrentInput('db')
+  }
+
+  function downForwardPressed(){
+    setCurrentInput('df')
+  }
+
+  function NoInput(){
+    setCurrentInput('n')
+  }
+
+  
 
   function createLobby(){
 
@@ -185,14 +211,37 @@ function Scene({}){
   useEffect(() => {
     const checkGamepadInput = () => {
       if (gamepads[selectedController]) {
-        if(gamepads[selectedController].axes[controllerMapping['down'].button] >= .8){
+        if(controllerMapping['back'].button(gamepads[selectedController]) >= .5 && controllerMapping['up'].button(gamepads[selectedController]) <= -.5){
+          upForwardPressed();
+        }
+        else if(controllerMapping['down'].button(gamepads[selectedController]) >= .5 && controllerMapping['back'].button(gamepads[selectedController]) <= -.5){
+          downBackPressed();
+        }
+        else if(controllerMapping['down'].button(gamepads[selectedController]) >= .5 && controllerMapping['back'].button(gamepads[selectedController]) >= .5){
+          downForwardPressed();
+        }
+        else if(controllerMapping['back'].button(gamepads[selectedController]) <= -.5 && controllerMapping['up'].button(gamepads[selectedController]) <= -.5){
+          upBackPressed();
+        }
+        else if(controllerMapping['down'].button(gamepads[selectedController]) >= .5){
           DownPressed();
         }
-      
+        else if(controllerMapping['up'].button(gamepads[selectedController]) <= -.5){
+          UpPressed();
+        }
+        else if(controllerMapping['back'].button(gamepads[selectedController]) <= -.5){
+          BackPressed();
+        }
+        else if(controllerMapping['back'].button(gamepads[selectedController]) >= .5){
+          ForwardPressed();
+        }
+        else{
+          NoInput();
+        }
       } 
-      else {
-
-      }
+      // else {
+      //   console.log('no controllers detected')
+      // }
     };
     if(gamepads[selectedController]){
       checkGamepadInput();
@@ -252,14 +301,15 @@ function Scene({}){
             </Text>
           </Button>
         </Container>
-        <Container flexGrow={1} margin={32} backgroundColor="blue">
-          <Text>
+        <Container flexGrow={1} margin={32}>
+           <Text>
             {selectedController != -1 ? 
               `Selected Controller: ${gamepads[selectedController]['id']}`
               :
               `Selected Controller: None, Keyboard controls`
             }
           </Text>
+          <InputVisualization controllerConnected={selectedController != -1 ? true:false} currentInput={currentInput} />
 
         </Container>
       </Fullscreen>
@@ -300,11 +350,13 @@ function Scene({}){
                 menu 
               </Text>
             </Button>
+            <InputVisualization controllerConnected={selectedController != -1 ? true:false} currentInput={currentInput} />
         </Container>
       </Fullscreen>
       <OrbitControls/>
       <gridHelper/>
       <Player />
+     
       <GizmoHelper
           alignment="bottom-right" // widget alignment within scene
           margin={[80, 80]} // widget margins (X, Y)

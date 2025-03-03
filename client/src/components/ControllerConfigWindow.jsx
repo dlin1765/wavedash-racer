@@ -5,12 +5,7 @@ function ControllerConfigWindow({controllerConnected}){
     const { gamepads } = useContext(GamepadsContext);
     const [newControllerConnected, setNewControllerConnected] = useState(false);
 
-    useEffect(() =>{
-        
 
-
-
-    }, [gamepads])
 
 
     return(
