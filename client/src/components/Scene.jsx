@@ -15,17 +15,39 @@ import { OrbitControls, GizmoHelper, GizmoViewport } from '@react-three/drei';
 import { Root, Container, Fullscreen, Text} from "@react-three/uikit";
 import { Button } from "@react-three/uikit-default"
 import { TextureLoader } from 'three';
-import wavuSheet from '../assets/player-spritesheets/char-wavedash.png';
 import Player from './Player.jsx';
-import walkingSheet from '../assets/player-spritesheets/char-walking.png';
-import crouchingSheet from '../assets/player-spritesheets/char-crouching.png';
 import './GameWindow.jsx';
-import crouchDashSheet from '../assets/player-spritesheets/char-crouchdash2.png';
 import { GamepadsProvider } from 'react-gamepads';
 import { GamepadsContext, useGamepads } from 'react-gamepads';
 import InputVisualization from "./InputVisualization.jsx";
 import { io } from 'socket.io-client'
 import { socket } from "../socket.jsx";
+import idleSheet from '../assets/player-spritesheets/char-idle.png';
+import wavuSheet from '../assets/player-spritesheets/char-wavedash.png';
+import walkingSheet from '../assets/player-spritesheets/char-walking.png';
+import cdSheet from '../assets/player-spritesheets/char-crouchdash3.png';
+import forwardDashSheet from '../assets/player-spritesheets/char-forwarddash2.png'
+import crouchSheet from '../assets/player-spritesheets/char-crouch3.png'
+import crouchingSheet from '../assets/player-spritesheets/char-crouching2.png'
+import uncrouchSheet from '../assets/player-spritesheets/char-uncrouch.png'
+
+const animations = {
+  'idle': [idleSheet, 8], 
+  'wavu': [wavuSheet, 6], 
+  'cd': [cdSheet, 5],
+  'cd1': [cdSheet, 5],
+  'dash': [forwardDashSheet, 7],
+  'crouch': [crouchSheet, 3],
+  'crouching': [crouchingSheet, 8],
+  'uncrouch': [uncrouchSheet, 3]
+};
+
+const specialActions = {
+    'cd': {input: ['f', 'n', 'df'], totalTime: 20, playOnce: true, index: 0},
+    'cd1': {input: ['f','n', 'd', 'df'], totalTime: 20, playOnce: true, index: 0},
+    'dash': {input: ['f', 'n', 'f'], totalTime: 20, playOnce: true}
+}
+
 
 const SkyBox = memo(function SkyBox(){
     const { scene } = useThree();
@@ -57,8 +79,11 @@ const SkyBox = memo(function SkyBox(){
 
 // after df you need to double tap to get a dash
 
-// after f you have 16f or so to tap f again and get run state (run state lets you cd any time during it)
+// after f you have 20f or so to tap f again and get run state (run state lets you cd any time during it)
+// inputs seem to be stored for 20 frames
 
+// f stored for 15 frames before being cleared 
+// cd input has to be completed in 20 frames 
 
 // f -> looking for nuetral for 7 frames otherwise clear 
 // f n -> if during crouchdash, look for d or df for the cd animation length, 
@@ -132,14 +157,17 @@ function makeid(length) {
 function Scene({events, isConnected}){
   const [sceneId, setSceneId] = useState('title')
   const [inputBuffer, setInputBUffer] = useState([])
-  const [currentInput, setCurrentInput] = useState(['n'])
-  const [selectedController, setSelectedController] = useState(-1);
+  const [currentInput, setCurrentInput] = useState('n')
+  const [selectedController, setSelectedController] = useState(-1)
   const { gamepads } = useContext(GamepadsContext);
   const [userSocket, setUserSocket] = useState(io)
   const [currentLobbyId, setCurrentLobbyId] = useState('')
-  const [inputValue, setInputValue] = useState('');
+  const [inputValue, setInputValue] = useState('')
+  const [playOnce, setPlayOnce] = useState(true)
+  const [playerAction, setPlayerAction] = useState('idle')
 
-  const inputRef = useRef(null);
+  const inputRef = useRef(null)
+  let timeElapsed = useRef(0)
   // socket.on("connect", () => {
   //   console.log(socket.id); // x8WIv7-mJelg7on_ALbx
   // });
@@ -157,15 +185,27 @@ function Scene({events, isConnected}){
     function playerJoined(arg){
       setCurrentLobbyId(arg['roomId'])
     }
-
     socket.on('player-joined',playerJoined)
-  
     return ()=>{
       socket.off('player-joined', playerJoined)
     }
 
   }, [])
      
+
+  // const t = useRef(0);
+  // const frame = useRef(0)
+  // useFrame((_, delta) => {
+  //   t.current += delta * 1000;
+  //   if (t.current >= 100) {
+  //     frame.current = (frame.current + 1) % 60;
+  //     t.current = 0;
+  //   }
+  // });
+
+
+
+
   const KeyPressed = (event) =>{
     console.log(event.code);
     switch(event.code){
@@ -240,18 +280,6 @@ function Scene({events, isConnected}){
     setCurrentInput('n')
   }
 
-
-
-  
-
-  function createLobby(){
-    _socket.emit("create-lobby", {roomId: makeid(6)})
-  }
-
-  function joinLobby(){
-
-  }
-
   function connectToServer() {
     socket.connect();
     console.trace()
@@ -312,6 +340,8 @@ function Scene({events, isConnected}){
         else{
           NoInput();
         }
+
+        //checkSpecialMoves()
       } 
       // else {
       //   console.log('no controllers detected')
@@ -320,9 +350,31 @@ function Scene({events, isConnected}){
     if(gamepads[selectedController]){
       checkGamepadInput();
     }
-    const interval = setInterval(checkGamepadInput, 166.67); 
+    const interval = setInterval(checkGamepadInput, 16.67); 
     return () => clearInterval(interval); 
   },[gamepads])
+
+  // function checkSpecialMoves(){
+  //   if(currentInput == 'f'){
+  //     timeElapsed.current = timeElapsed.current + 1
+  //   }
+  //   else if(currentInput == 'b'){
+  //     timeElapsed.current = 0
+  //   }
+  // }
+
+  // useEffect(() => {
+  //   const checkSpecialMoves = () => {
+  //     if (gamepads[selectedController]) {
+  //       print("hello???")
+  //     }
+  //   };
+  //   if(gamepads[selectedController]){
+  //     checkSpecialMoves();
+  //   }
+  //   const interval = setInterval(checkSpecialMoves, 166.67); 
+  //   return () => clearInterval(interval); 
+  // },[currentInput])
 
   // const KeyPressed = (event) =>{
   //   if(sceneId == 1 && event.code == "KeyJ"){
@@ -330,6 +382,10 @@ function Scene({events, isConnected}){
   //     setTemp('playing the game')
   //   }
   // }
+
+  const getPlayerAction = (arg) => {
+    setPlayerAction(arg)
+  }
 
   function playButtonClicked(){
       console.log('play button clicked')
@@ -453,11 +509,12 @@ function Scene({events, isConnected}){
                 disconnect
               </Text>
           </Button>
+         
         </Container>
       </Fullscreen>
       <OrbitControls/>
       <gridHelper/>
-      <Player />
+      <Player playOnce = {playOnce} currentInput={currentInput} onData = {getPlayerAction}/>
      
       <GizmoHelper
           alignment="bottom-right" // widget alignment within scene
