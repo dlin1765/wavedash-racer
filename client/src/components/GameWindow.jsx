@@ -22,6 +22,8 @@ import crouchDashSheet from '../assets/player-spritesheets/char-crouchdash2.png'
 import { GamepadsContext, useGamepads } from 'react-gamepads';
 import { GamepadsProvider } from 'react-gamepads';
 import { Button } from "@react-three/uikit-default";
+import { socket } from '../socket.jsx'
+import { createContext } from 'react';
 
 // create an object that represents a gamepad 
 // implement input handling in here and pass those inputs to the components
@@ -47,10 +49,55 @@ const keyboardMapping = {
   "B": {button: "Escape"}
 }
 
+
+
+
 function GameWindow(){
-    const [sceneId, setSceneId] = useState('title');
-    const [selectedController, setSelectedControler] = useState(-1);
-    const { gamepads } = useContext(GamepadsContext);
+    const [isConnected, setIsConnected] = useState(socket.connected);
+    const [playEvents, setPlayEvents] = useState([]);
+  
+    useEffect(() => {
+      function onConnect() {
+        setIsConnected(true)
+        console.log(socket.id)
+      }
+  
+      function onDisconnect() {
+        setIsConnected(false);
+      }
+  
+      function onClickPlayButton(value) {
+        setPlayEvents(previous => [...previous, value]);
+      }
+
+      function joinSuccessGlobal(){
+        console.log(socket.id + " joined a lobby!")
+      }
+
+      function playerJoined(){
+        console.log("only some should see that " + socket.id + "joined a lobby!")
+      }
+      
+      function playerMessage(){
+        console.log('client recieved player message')
+      }
+
+      socket.on('connect', onConnect)
+      socket.on('disconnect', onDisconnect)
+      socket.on('play-button-pressed', onClickPlayButton)
+      socket.on('join-success', joinSuccessGlobal)
+      socket.on("player-joined", playerJoined)
+      socket.on('player-message', playerMessage)
+  
+      return () => {
+        socket.off('connect', onConnect)
+        socket.off('disconnect', onDisconnect)
+        socket.off('play-button-pressed', onClickPlayButton)
+        socket.off('join-success', joinSuccessGlobal)
+        socket.off('player-joined', playerJoined)
+        socket.off('player-message', playerMessage)
+      };
+    }, [])
 
     // useEffect(() => {
     //   window.addEventListener('keydown', KeyPressed);
@@ -86,7 +133,7 @@ function GameWindow(){
         <>
             
             <div className="flex py-0 pl-paddingLength pr-paddingLength h-[80vh]">
-                <Scene>
+                <Scene events= {playEvents} isConnected={isConnected}>
                 </Scene>
             </div>
         </>

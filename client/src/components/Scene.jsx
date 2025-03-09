@@ -24,6 +24,8 @@ import crouchDashSheet from '../assets/player-spritesheets/char-crouchdash2.png'
 import { GamepadsProvider } from 'react-gamepads';
 import { GamepadsContext, useGamepads } from 'react-gamepads';
 import InputVisualization from "./InputVisualization.jsx";
+import { io } from 'socket.io-client'
+import { socket } from "../socket.jsx";
 
 const SkyBox = memo(function SkyBox(){
     const { scene } = useThree();
@@ -115,12 +117,32 @@ const keyboardMapping = {
   "B": {button: "Escape"}
 }
 
-function Scene({}){
+function makeid(length) {
+  let result = '';
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const charactersLength = characters.length;
+  let counter = 0;
+  while (counter < length) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    counter += 1;
+  }
+  return result;
+}
+
+function Scene({events, isConnected}){
   const [sceneId, setSceneId] = useState('title')
   const [inputBuffer, setInputBUffer] = useState([])
   const [currentInput, setCurrentInput] = useState(['n'])
   const [selectedController, setSelectedController] = useState(-1);
   const { gamepads } = useContext(GamepadsContext);
+  const [userSocket, setUserSocket] = useState(io)
+  const [currentLobbyId, setCurrentLobbyId] = useState('')
+  const [inputValue, setInputValue] = useState('');
+
+  const inputRef = useRef(null);
+  // socket.on("connect", () => {
+  //   console.log(socket.id); // x8WIv7-mJelg7on_ALbx
+  // });
 
   useEffect(() => {
     window.addEventListener('keydown', KeyPressed);
@@ -130,20 +152,49 @@ function Scene({}){
         //window.removeEventListener('keydown', escKeyPressed);
     };
   });
+
+  useEffect(()=>{
+    function playerJoined(arg){
+      setCurrentLobbyId(arg['roomId'])
+    }
+
+    socket.on('player-joined',playerJoined)
+  
+    return ()=>{
+      socket.off('player-joined', playerJoined)
+    }
+
+  }, [])
      
   const KeyPressed = (event) =>{
     console.log(event.code);
     switch(event.code){
-      case(keyboardMapping['up'].button):
+      case(keyboardMapping['up'].button && keyboardMapping['forward'].button) :
+        upForwardPressed()
+        break;
+      case(keyboardMapping['up'].button && keyboardMapping['back'].button) :
+        upBackPressed()
+        break;
+      case(keyboardMapping['down'].button && keyboardMapping['forward'].button) :
+        downForwardPressed()
+        break;
+      case(keyboardMapping['down'].button && keyboardMapping['back'].button) :
+        downBackPressed()
+        break;
+      case(keyboardMapping['up'].button) :
+        UpPressed()
         console.log("up");
         break;
       case(keyboardMapping['down'].button):
-        console.log("up");
+        DownPressed()
+        console.log("down");
         break;
       case(keyboardMapping['back'].button):
+        BackPressed()
         console.log("back");
         break;
       case(keyboardMapping['forward'].button):
+        ForwardPressed()
         console.log("forward");
         break;
     }
@@ -189,15 +240,38 @@ function Scene({}){
     setCurrentInput('n')
   }
 
+
+
   
 
   function createLobby(){
-
+    _socket.emit("create-lobby", {roomId: makeid(6)})
   }
 
   function joinLobby(){
 
   }
+
+  function connectToServer() {
+    socket.connect();
+    console.trace()
+    const lobbyID = makeid(6)
+    setCurrentLobbyId(lobbyID)
+    socket.emit("create-lobby", {roomId: lobbyID})
+  }
+
+  function disconnect() {
+    socket.disconnect();
+  }
+
+  // const connect = () =>{
+  //   const _socket = io.connect('http://localhost:3001')
+  //   setUserSocket(_socket)
+  //   _socket.emit("create-lobby", {roomId: makeid(6)})
+  //   console.trace()
+  //   // createLobby()
+  // }
+
 
   useEffect(() =>{
     if(sceneId == 'title' && Object.entries(gamepads).length != 0){
@@ -258,22 +332,39 @@ function Scene({}){
   // }
 
   function playButtonClicked(){
-      console.log('play button clicked');
-      setSceneId('play');
+      console.log('play button clicked')
+      connectToServer()
+      setSceneId('play')
+
+      //e.stopPropagation()
   }
     
   function menuButtonClicked(){
-    console.log('menu button clicked');
-    setSceneId('title');
+    console.log('menu button clicked')
+    socket.disconnect()
+    setSceneId('title')
   }
 
   function controllerConfigClicked(){
-    console.log('controller config button clicked');
-    setSceneId('controller');
+    console.log('controller config button clicked')
+    setSceneId('controller')
+  }
+
+  function joinLobbyClicked(){
+    const inputValue = inputRef.current.value
+    socket.connect()
+    socket.emit('join-lobby', {roomId: inputValue})
+    console.log('Input value', inputValue)
+    setInputValue(inputValue)
   }
 
   const controllerSelect = (controllerID) => {
     setSelectedControler(parseInt(controllerID))
+  }
+
+  function emit(){
+    console.log('trying to emit')
+    socket.emit('message', {roomId: currentLobbyId, message: socket.id + " says hello"}) 
   }
 
   const startScene0 = 
@@ -300,6 +391,7 @@ function Scene({}){
               Controller config
             </Text>
           </Button>
+          
         </Container>
         <Container flexGrow={1} margin={32}>
            <Text>
@@ -351,6 +443,16 @@ function Scene({}){
               </Text>
             </Button>
             <InputVisualization controllerConnected={selectedController != -1 ? true:false} currentInput={currentInput} />
+            <Button variant="outline" size="default" backgroundColor='white' onClick={emit}>
+              <Text>
+                emit msg
+              </Text>
+          </Button>
+          <Button variant="outline" size="default" backgroundColor='white' onClick={disconnect}>
+              <Text>
+                disconnect
+              </Text>
+          </Button>
         </Container>
       </Fullscreen>
       <OrbitControls/>
@@ -370,7 +472,28 @@ function Scene({}){
 
 
     return(
-      sceneArr[sceneId]
+      <>
+        <div className="absolute z-10 transform -translate-x-1/2 -translate-y-1/2 border top-1/2 left-1/2">
+          <button className="playButton" onClick={playButtonClicked}>
+            play
+          </button>
+          <button className="playButton" onClick={menuButtonClicked}>
+            menu
+          </button>
+          <input type="text" name="fname" ref = {inputRef}/>
+          <button className="playButton" onClick={joinLobbyClicked}>
+            join lobby
+          </button>
+          <button className="playButton" onClick={emit}>
+            emit
+          </button>
+        </div>
+        {sceneArr[sceneId]}
+      </>
+        
+        
+
+
     );
 }
 

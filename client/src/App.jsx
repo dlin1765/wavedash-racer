@@ -15,13 +15,13 @@ import './styles/App.css'
 
 function App() {
 
-  const connect = () =>{
-    const socket = io.connect('http://localhost:3001')
-  }
+  // const connect = () =>{
+  //   const socket = io.connect('http://localhost:3001')
+  // }
 
-  useEffect(()=>{
-    connect();
-  }, []) 
+  // useEffect(()=>{
+  //   connect();
+  // }, []) 
   return (
     <>
       <div className="grid grid-cols-1">
