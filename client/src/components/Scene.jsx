@@ -43,9 +43,9 @@ const animations = {
 };
 
 const specialActions = {
-    'cd': {input: ['f', 'n', 'df'], totalTime: 20, playOnce: true, index: 0},
-    'cd1': {input: ['f','n', 'd', 'df'], totalTime: 20, playOnce: true, index: 0},
-    'dash': {input: ['f', 'n', 'f'], totalTime: 20, playOnce: true}
+    'cd': {input: ['f', 'n', 'df'], totalTime: [0,20], playOnce: true, index: 0},
+    'cd1': {input: ['f','n', 'd', 'df'], totalTime: [0,20], playOnce: true, index: 0},
+    'dash': {input: ['f', 'n', 'f'], totalTime: [0,20], playOnce: true}
 }
 
 

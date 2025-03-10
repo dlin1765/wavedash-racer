@@ -26,9 +26,9 @@ const animations = {
 };
 
 const specialActions = {
-    'cd': {'input': ['f', 'n', 'df'], 'totalTime': [0, 20], 'playOnce': true},
+    'cd': {'input': ['f', 'n', 'df'], 'totalTime': [0, 20], 'playOnce': true, 'index': 0},
     'cd1': {'input': ['f','n', 'd', 'df'], 'totalTime': [0, 20], 'playOnce': true, 'index': 0},
-    'dash': {'input': ['f', 'n', 'f'], 'totalTime': [0, 20], 'playOnce': true}
+    'dash': {'input': ['f', 'n', 'f'], 'totalTime': [0, 20], 'playOnce': true, 'index': 0}
 }
 
 
@@ -71,22 +71,25 @@ function AnimatedSprite({  animation, playOnce}) {
     }
   });
 
+  // <Container flexGrow={1}  justifyContent={'center'}>
+  //                <Text>
+  //                  {`frame: ${frame.current} time: ${t.current}`}
+  //               </Text>
+  //          </Container>
+  //          <Container flexGrow={1}  justifyContent={'center'}>
+  //                <Text>
+  //                  {`frame: ${frame.current} time: ${t.current}`}
+  //               </Text>
+  //          </Container>
+
+
   return (
     <>
       <sprite>
         <spriteMaterial map={texture} />
       </sprite>
       <Fullscreen flexDirection="column" >
-          <Container flexGrow={1}  justifyContent={'center'}>
-                 <Text>
-                   {`frame: ${frame.current} time: ${t.current}`}
-                </Text>
-           </Container>
-           <Container flexGrow={1}  justifyContent={'center'}>
-                 <Text>
-                   {`frame: ${frame.current} time: ${t.current}`}
-                </Text>
-           </Container>
+          
       </Fullscreen>
     </>
     
@@ -96,12 +99,7 @@ function AnimatedSprite({  animation, playOnce}) {
 function Player({playOnce, currentInput, onData}) {
   const [animationState, setAnimationState] = useState('idle');
   let lastInput = useRef('')
-  // const [gamepads, setGamepads] = useState({});
   const { gamepads } = useContext(GamepadsContext);
-  // useGamepads((_gamepads) => {
-  //   setGamepads(_gamepads);
-  //   console.log("hello");
-  // });
   const frame = useRef(0);
   const t = useRef(0);
 
@@ -128,23 +126,30 @@ function Player({playOnce, currentInput, onData}) {
     if (t.current >= 16.67) {
       frame.current = (frame.current + 1) % 60;
       t.current = 0;
-      const cd1 = specialActions['cd1']
-      console.log('currentInput: ' + currentInput + ' == ' + 'specialInput[' + cd1['input'][cd1['index']] + ']' )
-      if(currentInput == cd1['input'][cd1['index']] ){
-        // lastInput.current = currentInput
-        // specialActions['cd1'][specialActions['cd1']['index']] += 1
-        cd1['index'] += 1
-
-        if(cd1['index'] >= cd1['input'].length){
-          console.log('CROUCH DASH 1 COMPLETED')
+      for(const key in specialActions){
+        
+        if(currentInput == specialActions[key]['input'][specialActions[key]['index']] && specialActions[key]['totalTime'][0] <= specialActions[key]['totalTime'][1]){
+          
+          lastInput.current = currentInput
+          // specialActions['cd1'][specialActions['cd1']['index']] += 1
+          specialActions[key]['index'] += 1
+          specialActions[key]['totalTime'][0] += 1
+          if(specialActions[key]['index'] >= specialActions[key]['input'].length){
+            console.log(key + ' ACTION COMPLETED')
+            specialActions[key]['index'] = 0
+            specialActions[key]['totalTime'][0] = 0
+          }
         }
-      }
-      else{
-        cd1['index'] = 0
-      }
-      
+        else if(lastInput.current == currentInput && specialActions[key]['totalTime'][0] <= specialActions[key]['totalTime'][1]){
+          specialActions[key]['totalTime'][0] += 1
+        }
+        else{
+          specialActions[key]['index'] = 0
+          specialActions[key]['totalTime'][0] = 0
+          lastInput.current = ''
+        }
+      } // holding forward, looking for nuetral, it times out, starts looking for forward again, implement some kind of input buffer rather than just reading the current input
     }
-    
   });
 
   // useEffect(() => {
@@ -171,6 +176,17 @@ function Player({playOnce, currentInput, onData}) {
           <Container flexGrow={1}  justifyContent={'center'}>
                  <Text>
                    {gamepads[0] ? (gamepads[0].buttons[4].pressed ? "Pressed" : "Not Pressed") : "not connected"}
+                </Text>
+           </Container>
+           <Container flexGrow={1}  justifyContent={'center'} flexDirection={'column'} alignItems={'center'}>
+                 <Text>
+                   {'cd1 next input: ' + specialActions['cd1']['input'][specialActions['cd1']['index']] + ' cd1 index: ' + specialActions['cd1']['index'] + ' elapsedTime: ' + specialActions['cd1']['totalTime']}
+                </Text>
+                <Text>
+                   {'dash next input: ' + specialActions['dash']['input'][specialActions['dash']['index']] + ' dash index: ' + specialActions['dash']['index'] + ' elapsedTime: ' + specialActions['dash']['totalTime']}
+                </Text>
+                <Text>
+                   {'cd1 next input: ' + specialActions['cd']['input'][specialActions['cd']['index']] + ' cd index: ' + specialActions['cd']['index'] + ' elapsedTime: ' + specialActions['cd']['totalTime']}
                 </Text>
            </Container>
       </Fullscreen>
